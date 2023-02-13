@@ -145,13 +145,20 @@ pub mod pallet {
 		/// # </weight>
 		#[pallet::call_index(0)]
 		#[pallet::weight(50_000_000)]
-		pub fn set_name(origin: OriginFor<T>, name: Vec<u8>) -> DispatchResult {
+		pub fn set_name(origin: OriginFor<T>, first: Vec<u8>, last: Option<Vec<u8>>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			let bounded_name: BoundedVec<_, _> =
-				name.try_into().map_err(|_| Error::<T>::TooLong)?;
-			ensure!(bounded_name.len() >= T::MinLength::get() as usize, Error::<T>::TooShort);
+			let bounded_first: BoundedVec<_, _> =
+				first.try_into().map_err(|_| Error::<T>::TooLong)?;
+			ensure!(bounded_first.len() >= T::MinLength::get() as usize, Error::<T>::TooShort);
 
+			let mut bounded_last: BoundedVec<_, _> = Default::default();
+			if let Some(last) = last {
+				bounded_last= last.try_into().map_err(|_| Error::<T>::TooLong)?;
+				ensure!(bounded_last.len() >= T::MinLength::get() as usize, Error::<T>::TooShort);	
+			}
+			let bounded_last: Option<BoundedVec<u8, T::MaxLength>> = Some(bounded_last);
+			
 			let deposit = if let Some((_, deposit)) = <NameOf<T>>::get(&sender) {
 				Self::deposit_event(Event::<T>::NameChanged { who: sender.clone() });
 				deposit
@@ -162,7 +169,8 @@ pub mod pallet {
 				deposit
 			};
 
-			<NameOf<T>>::insert(&sender, (bounded_name, deposit));
+			
+			<NameOf<T>>::insert(&sender, (Nickname{first: bounded_first, last: bounded_last}, deposit));
 			Ok(())
 		}
 
@@ -236,15 +244,25 @@ pub mod pallet {
 		pub fn force_name(
 			origin: OriginFor<T>,
 			target: AccountIdLookupOf<T>,
-			name: Vec<u8>,
+			first: Vec<u8>, 
+			last: Option<Vec<u8>>
 		) -> DispatchResult {
 			T::ForceOrigin::ensure_origin(origin)?;
 
-			let bounded_name: BoundedVec<_, _> =
-				name.try_into().map_err(|_| Error::<T>::TooLong)?;
+			let bounded_first: BoundedVec<_, _> =
+				first.try_into().map_err(|_| Error::<T>::TooLong)?;
+			ensure!(bounded_first.len() >= T::MinLength::get() as usize, Error::<T>::TooShort);
+
+			let mut bounded_last: BoundedVec<_, _> = Default::default();
+			if let Some(last) = last {
+				bounded_last= last.try_into().map_err(|_| Error::<T>::TooLong)?;
+				ensure!(bounded_last.len() >= T::MinLength::get() as usize, Error::<T>::TooShort);	
+			}
+			let bounded_last: Option<BoundedVec<u8, T::MaxLength>> = Some(bounded_last);
+
 			let target = T::Lookup::lookup(target)?;
 			let deposit = <NameOf<T>>::get(&target).map(|x| x.1).unwrap_or_else(Zero::zero);
-			<NameOf<T>>::insert(&target, (bounded_name, deposit));
+			<NameOf<T>>::insert(&target, (Nickname{first: bounded_first, last: bounded_last}, deposit));
 
 			Self::deposit_event(Event::<T>::NameForced { target });
 			Ok(())
