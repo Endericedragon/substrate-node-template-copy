@@ -108,10 +108,18 @@ pub mod pallet {
 		Unnamed,
 	}
 
+	#[derive(Encode, Decode, Default, TypeInfo, MaxEncodedLen, PartialEqNoBound, RuntimeDebug)]
+	#[scale_info(skip_type_params(T))]
+	#[codec(mel_bound())]
+	pub struct Nickname<T: Config> {
+		pub first: BoundedVec<u8, T::MaxLength>,
+		pub last: Option<BoundedVec<u8, T::MaxLength>>,
+	}
+
 	/// The lookup table for names.
 	#[pallet::storage]
 	pub(super) type NameOf<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, (BoundedVec<u8, T::MaxLength>, BalanceOf<T>)>;
+		StorageMap<_, Twox64Concat, T::AccountId, (Nickname<T>, BalanceOf<T>)>;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
