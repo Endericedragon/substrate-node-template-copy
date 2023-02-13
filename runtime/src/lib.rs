@@ -280,6 +280,25 @@ impl pallet_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 }
 
+impl pallet_nicks::Config for Runtime {
+	// The Balances pallet implements the ReservableCurrency trait.
+	// `Balances` is defined in `construct_runtime!` macro.
+	type Currency = Balances;
+	// Set ReservationFee to a value.
+	type ReservationFee = ConstU128<100>;
+	// No action is taken when deposits are forfeited.
+	type Slashed = ();
+	// Configure the FRAME System Root origin as the Nick pallet admin.
+	// https://paritytech.github.io/substrate/master/frame_system/enum.RawOrigin.html#variant.Root
+	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+	// Set MinLength of nick name to a desired value.
+	type MinLength = ConstU32<8>;
+	// Set MaxLength of nick name to a desired value.
+	type MaxLength = ConstU32<32>;
+	// The ubiquitous event type.
+	type RuntimeEvent = RuntimeEvent;
+  }
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub struct Runtime
@@ -298,6 +317,7 @@ construct_runtime!(
 		Sudo: pallet_sudo,
 		// Include the custom logic from the pallet-template in the runtime.
 		TemplateModule: pallet_template,
+		Nicks: pallet_nicks,
 	}
 );
 
