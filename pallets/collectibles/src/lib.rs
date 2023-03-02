@@ -25,6 +25,7 @@ pub mod pallet {
     }
 
     #[derive(Clone, Encode, Decode, PartialEq, Copy, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+    #[scale_info(skip_type_params(T))]
     pub struct Collectible<T: Config> {
         // Unsigned integers of 16 bytes to represent a unique identifier
         pub unique_id: [u8; 16],
@@ -46,9 +47,19 @@ pub mod pallet {
 
     #[pallet::storage]
     pub(super) type CollectiblesCount<T: Config> = StorageValue<_, u64, ValueQuery>;
-    /// Maps the Collectible struct to the unique_id.
     
+    /// Maps the Collectible struct to the unique_id.
     #[pallet::storage]
     pub(super) type CollectibleMap<T: Config> = StorageMap<_, Twox64Concat, [u8; 16], Collectible<T>>;
+
+    /// Track the collectibles owned by each account.
+    #[pallet::storage]
+    pub(super) type OwnerOfCollectibles<T: Config> = StorageMap<
+        _,
+        Twox64Concat,
+        T::AccountId,
+        BoundedVec<[u8; 16], T::MaximumOwned>,
+        ValueQuery,
+    >;
     
 }
