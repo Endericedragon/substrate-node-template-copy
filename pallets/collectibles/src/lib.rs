@@ -6,6 +6,7 @@ pub use pallet::*;
 pub mod pallet {
     use frame_support::pallet_prelude::*;
     use frame_system::pallet_prelude::*;
+    use frame_support::traits::{Currency, Randomness};
 
     #[pallet::pallet]
     #[pallet::generate_store(pub(super) trait Store)]
@@ -13,5 +14,10 @@ pub mod pallet {
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
-    }
+        type Currency: Currency<Self::AccountId>;
+        type CollectionRandomness: Randomness<Self::Hash, Self::BlockNumber>;
+        
+        #[pallet::constant]
+        type MaximumOwned: Get<u32>;
+}
 }
