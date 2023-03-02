@@ -42,6 +42,8 @@ pub mod pallet {
         #[pallet::constant]
         type MaximumOwned: Get<u32>;
     
-    
     }
+
+    #[pallet::storage]
+    pub(super) type CollectiblesCount<T: Config> = StorageValue<_, u64, ValueQuery>;
 }
