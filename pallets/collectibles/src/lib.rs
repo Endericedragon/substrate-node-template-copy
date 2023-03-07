@@ -79,6 +79,28 @@ pub mod pallet {
 		CollectibleCreated { collectible: [u8; 16], owner: T::AccountId },
     }
 
+    // Pallet callable functions
+    #[pallet::call]
+    impl<T: Config> Pallet<T> {
+        
+        /// Create a new unique collectible.
+        ///
+        /// The actual collectible creation is done in the `mint()` function.
+        #[pallet::weight(0)]
+        pub fn create_collectible(origin: OriginFor<T>) -> DispatchResult {
+            // Make sure the caller is from a signed origin
+                let sender = ensure_signed(origin)?;
+                
+                // Generate the unique_id and color using a helper function
+                let (collectible_gen_unique_id, color) = Self::gen_unique_id();
+                
+                // Write new collectible to storage by calling helper function
+                Self::mint(&sender, collectible_gen_unique_id, color)?;
+                
+                Ok(())
+            }
+    }
+
     // Pallet internal functions
     impl<T: Config> Pallet<T> {
         // Generates and returns the unique_id and color
