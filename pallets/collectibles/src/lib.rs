@@ -70,6 +70,12 @@ pub mod pallet {
         MaximumCollectiblesOwned,
         /// The total supply of collectibles can't exceed the u64 limit
         BoundsOverflow,
+        /// The collectible doesn't exist
+        NoCollectible,
+        /// You are not the owner
+        NotOwner,
+        /// Trying to transfer a collectible to yourself
+        TransferToSelf,
     }
     
     #[pallet::event]
