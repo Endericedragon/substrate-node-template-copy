@@ -39,10 +39,10 @@ pub mod pallet {
     pub trait Config: frame_system::Config {
         type Currency: Currency<Self::AccountId>;
         type CollectionRandomness: Randomness<Self::Hash, Self::BlockNumber>;
-        
+        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
         #[pallet::constant]
         type MaximumOwned: Get<u32>;
-    
     }
 
     #[pallet::storage]
@@ -61,5 +61,22 @@ pub mod pallet {
         BoundedVec<[u8; 16], T::MaximumOwned>,
         ValueQuery,
     >;
+
+    #[pallet::error]
+    pub enum Error<T> {
+        /// Each collectible must have a unique identifier
+        DuplicateCollectible,
+        /// An account can't exceed the `MaximumOwned` constant
+        MaximumCollectiblesOwned,
+        /// The total supply of collectibles can't exceed the u64 limit
+        BoundsOverflow,
+    }
     
+    #[pallet::event]
+    #[pallet::generate_deposit(pub(super) fn deposit_event)]
+    pub enum Event<T: Config> {
+	  /// A new collectible was successfully created.
+		CollectibleCreated { collectible: [u8; 16], owner: T::AccountId },
+    }
+
 }
