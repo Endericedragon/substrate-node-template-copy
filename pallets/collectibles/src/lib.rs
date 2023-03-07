@@ -81,8 +81,11 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-	  /// A new collectible was successfully created.
+        /// A new collectible was successfully created.
 		CollectibleCreated { collectible: [u8; 16], owner: T::AccountId },
+        /// A collectible was successfully transferred.
+        TransferSucceeded { from: T::AccountId, to: T::AccountId, collectible: [u8; 16] },
+
     }
 
     // Pallet callable functions
