@@ -2,10 +2,10 @@
 
 pub use pallet::*;
 
-#[frame_support::pallet]
+#[frame_support::pallet(dev_mode)]
 pub mod pallet {
-    use frame_support::{pallet_prelude::*, sp_runtime::AccountId32};
-    use frame_system::{pallet_prelude::*, Account};
+    use frame_support::{pallet_prelude::*};
+    use frame_system::{pallet_prelude::*};
     use frame_support::traits::{Currency, Randomness};
 
     #[pallet::pallet]
@@ -165,6 +165,42 @@ pub mod pallet {
             
             // Returns the unique_id of the new collectible if this succeeds
             Ok(unique_id)
+        }   
+        
+        // Update storage to transfer collectible
+        pub fn do_transfer(
+            collectible_id: [u8; 16],
+            to: T::AccountId,
+        ) -> DispatchResult {
+            // Get the collectible
+            let mut collectible = CollectibleMap::<T>::get(&collectible_id).ok_or(Error::<T>::NoCollectible)?;
+            let from = collectible.owner;
+            
+            ensure!(from != to, Error::<T>::TransferToSelf);
+            let mut from_owned = OwnerOfCollectibles::<T>::get(&from);
+            
+            // Remove collectible from list of owned collectible.
+            if let Some(ind) = from_owned.iter().position(|&id| id == collectible_id) {
+                from_owned.swap_remove(ind);
+            } else {
+                return Err(Error::<T>::NoCollectible.into())
+            }
+                // Add collectible to the list of owned collectibles.
+                let mut to_owned = OwnerOfCollectibles::<T>::get(&to);
+                to_owned.try_push(collectible_id).map_err(|()| Error::<T>::MaximumCollectiblesOwned)?;
+                
+                // Transfer succeeded, update the owner and reset the price to `None`.
+                collectible.owner = to.clone();
+                collectible.price = None;
+
+                // Write updates to storage
+                CollectibleMap::<T>::insert(&collectible_id, collectible);
+                OwnerOfCollectibles::<T>::insert(&to, to_owned);
+                OwnerOfCollectibles::<T>::insert(&from, from_owned);
+                
+                Self::deposit_event(Event::TransferSucceeded { from, to, collectible: collectible_id });
+            Ok(())
         }
+
     }
 }
