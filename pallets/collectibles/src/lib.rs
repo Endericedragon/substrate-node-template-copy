@@ -98,16 +98,16 @@ pub mod pallet {
         #[pallet::weight(0)]
         pub fn create_collectible(origin: OriginFor<T>) -> DispatchResult {
             // Make sure the caller is from a signed origin
-                let sender = ensure_signed(origin)?;
-                
-                // Generate the unique_id and color using a helper function
-                let (collectible_gen_unique_id, color) = Self::gen_unique_id();
-                
-                // Write new collectible to storage by calling helper function
-                Self::mint(&sender, collectible_gen_unique_id, color)?;
-                
-                Ok(())
-            }
+            let sender = ensure_signed(origin)?;
+            
+            // Generate the unique_id and color using a helper function
+            let (collectible_gen_unique_id, color) = Self::gen_unique_id();
+            
+            // Write new collectible to storage by calling helper function
+            Self::mint(&sender, collectible_gen_unique_id, color)?;
+            
+            Ok(())
+        }
 
         /// Transfer a collectible to another account.
         /// Any account that holds a collectible can send it to another account. 
