@@ -79,4 +79,61 @@ pub mod pallet {
 		CollectibleCreated { collectible: [u8; 16], owner: T::AccountId },
     }
 
+    // Pallet internal functions
+    impl<T: Config> Pallet<T> {
+        // Generates and returns the unique_id and color
+        fn gen_unique_id() -> ([u8; 16], Color) {
+            // Create randomness
+            let random = T::CollectionRandomness::random(&b"unique_id"[..]).0;
+            
+            // Create randomness payload. Multiple collectibles can be generated in the same block,
+            // retaining uniqueness.
+            let unique_payload = (
+                random,
+                frame_system::Pallet::<T>::extrinsic_index().unwrap_or_default(),frame_system::Pallet::<T>::block_number(),
+        );
+        
+        // Turns into a byte array
+        let encoded_payload = unique_payload.encode();
+        let hash = frame_support::Hashable::blake2_128(&encoded_payload);
+        
+        // Generate Color 
+        if hash[0] % 2 == 0 {
+                (hash, Color::Red)
+        } else {
+                (hash, Color::Yellow)
+        } 
+        }
+
+        // Function to mint a collectible
+        pub fn mint(
+            owner: &T::AccountId,
+            unique_id: [u8; 16],
+            color: Color,
+        ) -> Result<[u8; 16], DispatchError> {
+            // Create a new object
+            let collectible = Collectible::<T> { unique_id, price: None, color, owner: owner.clone() };
+            
+            // Check if the collectible exists in the storage map
+            ensure!(!CollectibleMap::<T>::contains_key(&collectible.unique_id), Error::<T>::DuplicateCollectible);
+            
+            // Check that a new collectible can be created
+            let count = CollectiblesCount::<T>::get();
+            let new_count = count.checked_add(1).ok_or(Error::<T>::BoundsOverflow)?;
+            
+            // Append collectible to OwnerOfCollectibles map
+            OwnerOfCollectibles::<T>::try_append(&owner, collectible.unique_id)
+                .map_err(|_| Error::<T>::MaximumCollectiblesOwned)?;
+            
+            // Write new collectible to storage and update the count
+            CollectibleMap::<T>::insert(collectible.unique_id, collectible);
+            CollectiblesCount::<T>::put(new_count);
+            
+            // Deposit the "Collectiblereated" event.
+            Self::deposit_event(Event::CollectibleCreated { collectible: unique_id, owner: owner.clone() });
+            
+            // Returns the unique_id of the new collectible if this succeeds
+            Ok(unique_id)
+        }
+    }
 }
