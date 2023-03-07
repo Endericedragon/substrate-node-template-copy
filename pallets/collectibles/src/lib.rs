@@ -108,6 +108,25 @@ pub mod pallet {
                 
                 Ok(())
             }
+
+        /// Transfer a collectible to another account.
+        /// Any account that holds a collectible can send it to another account. 
+        /// Transfer resets the price of the collectible, marking it not for sale.
+        #[pallet::weight(0)]
+        pub fn transfer(
+            origin: OriginFor<T>,
+            to: T::AccountId,
+            unique_id: [u8; 16],
+        ) -> DispatchResult {
+            // Make sure the caller is from a signed origin
+            let from = ensure_signed(origin)?;
+            let collectible = CollectibleMap::<T>::get(&unique_id).ok_or(Error::<T>::NoCollectible)?;
+            
+            ensure!(collectible.owner == from, Error::<T>::NotOwner);
+            
+            Self::do_transfer(unique_id, to)?;
+            Ok(())
+        }
     }
 
     // Pallet internal functions
@@ -166,7 +185,7 @@ pub mod pallet {
             // Returns the unique_id of the new collectible if this succeeds
             Ok(unique_id)
         }   
-        
+
         // Update storage to transfer collectible
         pub fn do_transfer(
             collectible_id: [u8; 16],
@@ -187,7 +206,7 @@ pub mod pallet {
             }
                 // Add collectible to the list of owned collectibles.
                 let mut to_owned = OwnerOfCollectibles::<T>::get(&to);
-                to_owned.try_push(collectible_id).map_err(|()| Error::<T>::MaximumCollectiblesOwned)?;
+                to_owned.try_push(collectible_id).map_err(|_id| Error::<T>::MaximumCollectiblesOwned)?;
                 
                 // Transfer succeeded, update the owner and reset the price to `None`.
                 collectible.owner = to.clone();
