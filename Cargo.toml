@@ -1,8 +1,17 @@
+# 关于工作区
+# https://rustwiki.org/zh-CN/cargo/reference/manifest.html#the-workspace-section
 [workspace]
+# 一组crate，共享相同的Cargo.lock
 members = [
     "node",
     "pallets/template",
     "runtime",
 ]
 [profile.release]
+# unwind会在panic时回溯函数调用栈直到找到出错的地方
+# 还会析构所有对象，做好清洁工作
+# 最后将函数返回值设置为1
 panic = "unwind"
+# panic还能取值为abort、custom
+# 前者直接把程序给扬了
+# 后者调用自定义的函数来处理panic
