@@ -4,7 +4,10 @@
 
 根目录中的`Cargo.lock`记录了全局依赖的crates。该文件中包含的内容过多，因此笔者计划从三个子成员的`Cargo.toml`入手，研究其依赖。
 
-> 观前提示：根据笔者的经验，以下crate的命名有一些规律，能帮助我们更快找到源代码的位置。若是以`frame`开头，那么多半在远程仓库的`frame`目录下，而若以`sp`开头，那么多半在远程仓库的`primitives`目录下。
+> 观前提示：根据笔者的经验，以下crate的命名有一些规律，能帮助我们更快找到源代码的位置。
+> - 若以`frame`开头，那么多半在远程仓库的`frame`目录下。
+> - 若以`sp`开头，那么多半在远程仓库的`primitives`目录下。
+> - 若以`sc`开头哦，那么多半在远程仓库的`client`目录下。
 
 ## pallet子成员的依赖
 
@@ -46,8 +49,37 @@
 - [sp-version](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/primitives/version)：提供一个函数，调用后返回runtime的版本信息。
 - [substrate-wasm-builder](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/utils/wasm-builder)：将项目编译为WASM可执行文件时使用。
 
-# 有用的资料
+## node子成员的依赖
 
+相比起上两者，node子成员的依赖有如下增添：
+
+- [clap](https://crates.io/crates/clap)：命令行参数解析工具。
+- [futures](https://crates.io/crates/futures)：Rust官方维护的异步库。
+- [jsonrpsee](https://crates.io/crates/jsonrpsee)：异步的JSON-RPC库。
+- [try-runtime-cli](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/utils/frame/try-runtime/cli)：一点介绍信息都没有。
+- [substrate-build-script-utils](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/utils/build-script-utils)：为`build.rs`服务。
+- [substrate-frame-rpc-system](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/utils/frame/rpc/system)：和FRAME关系密切的RPC操作。
+- [frame-benchmarking-cli](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/utils/frame/benchmarking-cli)：允许在命令行中执行基准测试。
+- [pallet-transaction-payment-rpc](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/frame/transaction-payment/rpc)：Transaction Payment Pallet的RPC接口。
+- [sc-cli](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/cli)：只说是Substrate的CLI库。
+- [sc-executor](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/executor)：提供向runtime发送执行命令请求的机能的库，但具体作用看不懂。
+- [sc-network](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/network)：Substrate的P2P网络库。
+- [sc-service](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/service)：超模！据仓库readme所述，它启动一个线程，在这个线程中启动network模块、client模块和交易池（extrinsic pool）模块，并管理它们之间的通信。
+- [sc-telemetry](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/telemetry)：没太看懂，但似乎是能把一些遥测数据发送到遥测服务器，最后应该是会在[Polkadot Telemetry](https://telemetry.polkadot.io/)中显示出来。
+- [sc-transaction-pool](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/transaction-pool)：提供client模块中的交易池支持。难得在仓库页面看到这么详细的介绍。
+- [sc-transaction-pool-api](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/transaction-pool/api)：从名字上看应该是为上面的crate提供API支持的。
+- [sc-offchain](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/offchain)：看着和`sp-offchain`很像，都是为Offchain Worker服务的。
+- [sc-statement-store](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/statement-store)：看名字似乎是存储链上状态的。
+- [sc-consensus-aura](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/consensus/aura)：看上去和`sp-consensus-aura`很像，都是为Aura共识算法服务的。
+- [sc-consensus-grandpa](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/consensus/grandpa)：看上去和`sp-consensus-grandpa`很像，都是为Grandpa共识算法服务的。
+- [sc-consensus](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/consensus)：看上去是Substrate共识算法的大合集，里面有包括但不限于PoW，Aura，Grandpa，babe等共识算法的子crate。
+- [sc-client-api](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/api)：client接口。。。？至少仓库页面是这么写的，具体作用未知。
+- [basic-authorship](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/basic-authorship)：根据其readme中的"Basic implementation of block-authoring logic"描述，似乎和区块创建有关？
+- [sc-rpc-api](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/rpc-api)：
+- [sp-keyring](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/primitives/keyring)：根据仓库readme介绍，它内置了多个测试用的账号。
+- [sp-blockchain](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/primitives/blockchain)：区块链相关的trait。
+
+# 有用的资料
 
 ## 查找crate信息
 
