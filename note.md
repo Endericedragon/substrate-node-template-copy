@@ -1,5 +1,7 @@
 # 依赖分析
 
+> 整个项目的依赖已经使用`cargo tree`生成，位于根目录下的`dependency-tree.txt`中。
+
 查看根目录的`Cargo.toml`中的内容可知，该项目由三个成员组成，分别是node，runtime和pallet。
 
 根目录中的`Cargo.lock`记录了全局依赖的crates。该文件中包含的内容过多，因此笔者计划从三个子成员的`Cargo.toml`入手，研究其依赖。
@@ -78,6 +80,25 @@
 - [sc-rpc-api](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/client/rpc-api)：
 - [sp-keyring](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/primitives/keyring)：根据仓库readme介绍，它内置了多个测试用的账号。
 - [sp-blockchain](https://github.com/paritytech/substrate/tree/polkadot-v1.0.0/primitives/blockchain)：区块链相关的trait。
+
+# 项目分析
+
+经过一通排查，终于可以调试整个项目啦！具体的配置请见`.vscode/launch.json`中。
+
+## node子成员
+
+可以肯定的是，`node/src/main.rs`中的`main()`就是整个Substrate Node Template项目的入口函数。证据如下：在`main()`中加入调试语句，编译运行后该调试语句总是比其他输出先打印出来。将`main()`函数中的`command::run()`注释掉之后，再编译运行，那么节点将只会输出调试语句的内容。
+
+另外一点需要注意的是，该`main()`的返回值`sc_cli::Result<T>`实际上是如下的包装：
+```rust
+pub type Result<T> = std::result::Result<T, Error>;
+```
+
+### command::run()
+
+位于`node/src/command.rs`中。命令行参数的种类很多，但全部由`node/src/cli.rs`中的`Subcommand`枚举类型定义。每种参数具体的内容又各自有定义，将鼠标移动到标识符上方查看悬浮提示。
+
+`command::run()`中利用一个`match`匹配这些不同类型的命令行参数。若什么命令行参数都不给，那么程序将进入`None`分支。
 
 # 有用的资料
 
