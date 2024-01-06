@@ -96,9 +96,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 ### command::run()
 
-位于`node/src/command.rs`中。命令行参数的种类很多，但全部由`node/src/cli.rs`中的`Subcommand`枚举类型定义。每种参数具体的内容又各自有定义，将鼠标移动到标识符上方查看悬浮提示。
+位于`node/src/command.rs`中。环境变量的种类很多，但全部由`node/src/cli.rs`中的`Subcommand`枚举类型定义。每种环境变量具体的内容又各自有定义，将鼠标移动到标识符上方查看悬浮提示。
 
-`command::run()`中利用一个`match`匹配这些不同类型的命令行参数。若什么命令行参数都不给，那么程序将进入`None`分支。
+`command::run()`中利用一个`match`匹配这些不同类型的环境变量。若什么环境变量都没发现，那么程序将进入`None`分支。根据调试的结果来看，我们的程序总是会进入None分支。在这个分支下，从命令行传入的参数将得到处理。
 
 # 有用的资料
 
