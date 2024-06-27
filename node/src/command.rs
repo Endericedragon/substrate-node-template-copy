@@ -50,6 +50,7 @@ impl SubstrateCli for Cli {
 
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
+	// 类似于C语言中argv的玩意
 	let cli = Cli::from_args();
 
 	match &cli.subcommand {
