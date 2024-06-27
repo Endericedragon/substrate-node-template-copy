@@ -1,0 +1,13 @@
+{
+    "call_sites_output_path": "./call-sites.json",
+    "dot_output_path": "./graph.dot",
+    "reductions": [
+        "Deduplicate"
+    ],
+    "included_crates": [],
+    "datalog_config": {
+        "ddlog_output_path": "./graph.dat",
+        "type_map_output_path": "./types.json",
+        "datalog_backend": "DifferentialDatalog"
+    }
+}

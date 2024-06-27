@@ -9,3 +9,8 @@
 # direnv files
 .envrc
 .direnv
+
+call-sites.bak.json
+call-sites.json
+cg.dot
+pts.txt
