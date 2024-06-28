@@ -55,9 +55,89 @@
 }
 ```
 
-## Substrate Node Template的大致划分
+## Substrate Node Template及其大致划分
 
-首先参考一下Substrate Node Template（下简称SNT）的[旧版仓库](https://github.com/Endericedragon/substrate-node-template-copy?tab=readme-ov-file#template-structure)里的描述。简单翻译一下：
+[Explore the code](https://docs.substrate.io/quick-start/explore-the-code/)章节对Substrate Node Template（下简称SNT）的代码结构作了概要性陈述，翻译如下：
+
+> **关于SNT**
+>
+> SNT囊括了一些默认的区块链要素构件，例如p2p网络、简易共识机制、交易处理等。针对账号、余额、交易手续费、管理员权限等功能，SNT也提供了一些基础的功能支持。
+>
+> 这些核心功能的实现，是通过预先定义好的**pallets**模块来实现的，例如以下几个模块：
+> - `pallet_balances`：管理账户资产和账户之间的转账。
+> - `pallet_transaction_payment`：管理交易手续费的处理。
+> - `pallet_sudo`：执行需要管理员权限的操作。
+>
+> SNT也提供了一个模板pallet——`pallet_template`，用以展示如何实现自定义pallet的功能。
+>
+> 有了上述的了解后，我们可以更加深入地探索SNT的代码，看看`substrate-node-template`里都有些啥。
+>
+> **清单文件**
+>
+> Substrate基于Rust编写，因此每个Rust项目都会有自己独立的`Cargo.toml`文件，指导该项目的编译过程。在`substrate-node-template`目录下的`Cargo.toml`，记录着构成SNT 工作空间（workspace）的几个成员（member）项目，像这样：
+>
+> ```toml
+> [workspace]
+> members = [
+>     "node",
+>     "pallets/template",
+>     "runtime",
+> ]
+> [profile.release]
+> panic = "unwind"
+> ```
+>
+> 这么看来，SNT是由三个成员组成的：
+> - `node`：提供Rust模块实现了很多核心区块链服务，例如p2p网络、区块产生、区块确认（finalization）、交易池管理等。
+> - `pallets/template`：提供了模板pallet——`pallet_template`，用以展示如何实现自定义pallet的功能。
+> - `runtime`：提供区块链应用逻辑，包括账号、余额、交易手续费等功能的实现。
+>
+> 每个成员项目也有各自的`Cargo.toml`清单文件，内含编译各成员所需的依赖项、设定等信息。举例来说，`node`项目的`Cargo.toml`文件指定了该成员的名字叫"node-template"，并且列出了一些核心库和原语，以提供区块链节点模板提供基本区块链服务所需的基本功能。关于库和原语，在[架构与rust库](https://docs.substrate.io/learn/architecture/)中有更详细的描述。
+>
+> 当下，只需明白清单文件记录着很多重要信息，就足够了。
+>
+> 如果去看`runtime/Cargo.toml`和`pallets/template/Cargo.toml`的话，会发现他们依赖的库和原语不尽相同，但是对各自依赖些啥会有点了解。
+>
+> **核心客户端源码**
+>
+> Substrate区块链的一大特点就是，节点由两个部分组成：核心客户端和运行时。SNT也不例外，其提供核心客户端服务的rust项目位于`node/src`目录，而运行时实现位于`runtime/src`目录。
+>
+> 默认情况下，`node/src`目录包含以下Rust模块：
+>
+> - `benchmarking.rs`
+> - `chain_spec.rs`
+> - `cli.rs`
+> - `command.rs`
+> - `lib.rs`
+> - `main.rs`
+> - `rpc.rs`
+> - `service.rs`
+>
+> 大部分核心客户端服务逻辑都位于`service.rs`模块中。这些代码在开发时几乎不需要更改。
+>
+> 在开发时最有可能需要修改的是`chain_spec.rs`文件，它描述了默认开发和本地测试网络的配置，包括默认预充值的开发用账户，和预置的有生产区块权限的节点。如果开发者想创建一个自定义的链，那么就需要修改`chain_spec.rs`文件，以指定该链所连接到的网络，以及与之通信的其他节点。
+>
+> **SNT默认运行时**
+>
+> 鉴于Substrate的模块性和灵活性，你可以任意修改工作空间中的任意一个Rust项。但是，大部分应用开发工作都在运行时和pallet中进行。在开始自定义运行时之前，你应该花点时间探索一下SNT默认的运行时。
+>
+> 默认运行时的清单文件`Cargo.toml`中记录了许多名字类似于`pallet-balances`, `pallet-sudo`这样的依赖项。除此之外，也有些名字类似`frame-xxx`的核心依赖项，例如`frame-system`, `frame-support`, `frame-executive`等。关于这些[核心依赖项](https://docs.substrate.io/learn/runtime-development/#core-frame-services)，目前只需知道它们是必要的就行了，不用太过在意。
+>
+> 默认运行时的源代码放在`runtime/src/lib.rs`文件中。打开一看好复杂，其实本质就这样：
+>
+> - import了`frame_system`和`frame_support`核心依赖项。
+> - 指定了运行时的版本信息。
+> - 声明了要包含的pallet。
+> - 声明了每个pallet的类型和参数。
+> - 设置了每个pallet的常量和变量值。
+> - 为每个pallet实现了`Config` trait。
+> - 用这些pallet构造出了运行时。
+> - 为评估pallet性能而准备了benchmarking框架。
+> - 实现了供核心客户端调用运行时的接口。
+>
+> 在[构造](https://docs.substrate.io/build/)和[测试](https://docs.substrate.io/test/)中有更多关于运行时的构建、定义基准测试、使用运行时的接口等话题的知识。现在对这些内容有个大概了解就成。
+
+关于SNT的结构划分，可以参考一下[旧版仓库](https://github.com/Endericedragon/substrate-node-template-copy?tab=readme-ov-file#template-structure)里的描述。简单翻译一下：
 
 > 像这样的Substrate项目通常都包含许多组件，它们分布在各个不同的目录中。
 >
@@ -95,3 +175,70 @@
 > 每个pallet都有一个自己的`Config` trait，它作为通用接口，可以通用地定义它所需的数据类型和参数。
 
 这样一来就指出了一条研究方向：Substrate依赖的libp2p网络协议栈，以及FRAME运行时和pallet的架构。如果能把libp2p给整到rCore上，那就能为实现真正的区块链操作系统打下很好的基础了。
+
+## 初探Node组件
+
+其实`node`目录底下的东西不是很复杂，才8个文件，一路看过去也应该有个了解了。从上文中我们得知这个Node组件主要干三件事：网络、共识、RPC。那么我们可以据此进行模块划分，把Node组件拆成更小的三个子模块。对`node`目录执行`cargo metadata`看看？
+
+结果发现和对SNT根目录执行`cargo metadata`没啥差别。但是好歹`resolve`的`root`有东西了，是`path+file:///home/endericedragon/repos/substrate-node-template-copy/node#node-template@4.0.0-dev`。
+
+在`packages`字段中搜索`node-template`，找到了`node`包，我们来看看关于它的基本信息：
+
+```json
+{
+    "name": "node-template",
+    "version": "4.0.0-dev",
+    "id": "path+file:///home/endericedragon/repos/substrate-node-template-copy/node#node-template@4.0.0-dev",
+    "license": "MIT-0",
+    "license_file": null,
+    "description": "A fresh FRAME-based Substrate node, ready for hacking.",
+    "source": null,
+    "dependencies": [...],
+    "targets": [
+        {
+            "kind": [
+                "lib"
+            ],
+            "crate_types": [
+                "lib"
+            ],
+            "name": "node-template",
+            "src_path": "/home/endericedragon/repos/substrate-node-template-copy/node/src/lib.rs",
+            "edition": "2021",
+            "doc": true,
+            "doctest": true,
+            "test": true
+        },
+        {
+            "kind": [
+                "bin"
+            ],
+            "crate_types": [
+                "bin"
+            ],
+            "name": "node-template",
+            "src_path": "/home/endericedragon/repos/substrate-node-template-copy/node/src/main.rs",
+            "edition": "2021",
+            "doc": true,
+            "doctest": false,
+            "test": true
+        },
+        {
+            "kind": [
+                "custom-build"
+            ],
+            "crate_types": [
+                "bin"
+            ],
+            "name": "build-script-build",
+            "src_path": "/home/endericedragon/repos/substrate-node-template-copy/node/build.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": false
+        }
+    ],
+    // -- snip --
+}
+```
+
