@@ -50,7 +50,7 @@ impl SubstrateCli for Cli {
 
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
-	// 类似于C语言中argv的玩意
+	// 解析命令行参数，形成结构化的配置选项
 	let cli = Cli::from_args();
 
 	match &cli.subcommand {
@@ -204,6 +204,7 @@ pub fn run() -> sc_cli::Result<()> {
 			runner.sync_run(|config| cmd.run::<Block>(&config))
 		},
 		None => {
+			// ./target/release/node-template --dev 将会来到这个分支
 			let runner = cli.create_runner(&cli.run)?;
 			runner.run_node_until_exit(|config| async move {
 				service::new_full(config).map_err(sc_cli::Error::Service)

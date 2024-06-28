@@ -242,3 +242,83 @@
 }
 ```
 
+按照我们从输出倒推输入的一贯作风，我们先看看把SNT运行起来会看到啥：
+
+```bash
+I guess the whole program starts from here!
+2024-06-28 21:00:30 Substrate Node
+2024-06-28 21:00:30 ✌️  version 4.0.0-dev-65686f28d2e
+2024-06-28 21:00:30 ❤️  by Substrate DevHub <https://github.com/substrate-developer-hub>, 2017-2024
+2024-06-28 21:00:30 📋 Chain specification: Development
+2024-06-28 21:00:30 🏷  Node name: exuberant-breath-4025
+2024-06-28 21:00:30 👤 Role: AUTHORITY
+2024-06-28 21:00:30 💾 Database: RocksDb at /tmp/substratetcmSaD/chains/dev/db/full
+2024-06-28 21:00:30 🔨 Initializing Genesis block/state (state: 0xf5e5…55e2, header-hash: 0x8116…d409)
+2024-06-28 21:00:30 👴 Loading GRANDPA authority set from genesis on what appears to be first startup.
+2024-06-28 21:00:30 Using default protocol ID "sup" because none is configured in the chain specs
+2024-06-28 21:00:30 🏷  Local node identity is: 12D3KooWDfknV64YGwxoSdjr3RF1VJDwvqGq152ZQDwwM5icejtf
+2024-06-28 21:00:30 💻 Operating system: linux
+2024-06-28 21:00:30 💻 CPU architecture: x86_64
+2024-06-28 21:00:30 💻 Target environment: gnu
+2024-06-28 21:00:30 💻 CPU: AMD Ryzen 7 7840HS w/ Radeon 780M Graphics
+2024-06-28 21:00:30 💻 CPU cores: 8
+2024-06-28 21:00:30 💻 Memory: 36081MB
+2024-06-28 21:00:30 💻 Kernel: 6.1.21.2-microsoft-standard-WSL2
+2024-06-28 21:00:30 💻 Linux distribution: Ubuntu 22.04.3 LTS
+2024-06-28 21:00:30 💻 Virtual machine: yes
+2024-06-28 21:00:30 📦 Highest known block at #0
+2024-06-28 21:00:30 〽️ Prometheus exporter started at 127.0.0.1:9615
+2024-06-28 21:00:30 Running JSON-RPC server: addr=127.0.0.1:9944, allowed origins=["*"]
+2024-06-28 21:00:35 💤 Idle (0 peers), best: #0 (0x8116…d409), finalized #0 (0x8116…d409), ⬇ 0 ⬆ 0
+2024-06-28 21:00:36 🙌 Starting consensus session on top of parent 0x811662f67987627b927acb80281971c6dead0e26a9a6d87b1fc9a5cbf754d409
+2024-06-28 21:00:36 🎁 Prepared block for proposing at 1 (0 ms) [hash: 0x41e62cd5900b6361e2fe0dab6a8475a010dfa2645926c1f81510fd1480321f20; parent_hash: 0x8116…d409; extrinsics (1): [0xb708…aa3a]
+2024-06-28 21:00:36 🔖 Pre-sealed block for proposal at 1. Hash now 0xf486749348b464752d6ebd9e27635aa7c38d9dd58ff86100f8b51353b24f508c, previously 0x41e62cd5900b6361e2fe0dab6a8475a010dfa2645926c1f81510fd1480321f20.
+2024-06-28 21:00:36 ✨ Imported #1 (0xf486…508c)
+2024-06-28 21:00:40 💤 Idle (0 peers), best: #1 (0xf486…508c), finalized #0 (0x8116…d409), ⬇ 0 ⬆ 0
+2024-06-28 21:00:42 🙌 Starting consensus session on top of parent 0xf486749348b464752d6ebd9e27635aa7c38d9dd58ff86100f8b51353b24f508c
+2024-06-28 21:00:42 🎁 Prepared block for proposing at 2 (0 ms) [hash: 0xdabbb79330b41f2636e05d140911b39cf7e1059972b14d061a7696d6b1c6a994; parent_hash: 0xf486…508c; extrinsics (1): [0xc022…c161]
+2024-06-28 21:00:42 🔖 Pre-sealed block for proposal at 2. Hash now 0x4a1ff70a56c5888fb7bba4c41ed5a99366ce78e772818f8130addfbf6e02b344, previously 0xdabbb79330b41f2636e05d140911b39cf7e1059972b14d061a7696d6b1c6a994.
+2024-06-28 21:00:42 ✨ Imported #2 (0x4a1f…b344)
+2024-06-28 21:00:45 💤 Idle (0 peers), best: #2 (0x4a1f…b344), finalized #0 (0x8116…d409), ⬇ 0 ⬆ 0
+2024-06-28 21:00:48 🙌 Starting consensus session on top of parent 0x4a1ff70a56c5888fb7bba4c41ed5a99366ce78e772818f8130addfbf6e02b344
+2024-06-28 21:00:48 🎁 Prepared block for proposing at 3 (0 ms) [hash: 0xbc59be3b935a4cf2407807be1794eb3be4a9c8a42a232aa3d84431a6562fad54; parent_hash: 0x4a1f…b344; extrinsics (1): [0xc7d0…f03b]
+2024-06-28 21:00:48 🔖 Pre-sealed block for proposal at 3. Hash now 0x40935ee3996f7e450756c68b86c3f9d2c92830613a13bf36bb6d558da7c18de3, previously 0xbc59be3b935a4cf2407807be1794eb3be4a9c8a42a232aa3d84431a6562fad54.
+2024-06-28 21:00:48 ✨ Imported #3 (0x4093…8de3)
+2024-06-28 21:00:50 💤 Idle (0 peers), best: #3 (0x4093…8de3), finalized #1 (0xf486…508c), ⬇ 0 ⬆ 0
+```
+
+第一行的`I guess the whole program starts from here!`标记了笔者之前发现的程序入口点（现已删除），位于`node/src/main.rs`中。跟踪其运行轨迹，可知其下一步会前往这个函数：
+
+```rs
+pub fn run() -> sc_cli::Result<()> {
+	// 解析命令行参数，形成结构化的配置选项
+	let cli = Cli::from_args();
+
+	match &cli.subcommand {
+        // --snip --
+		None => {
+			// ./target/release/node-template --dev 将会来到这个分支
+			let runner = cli.create_runner(&cli.run)?;
+			runner.run_node_until_exit(|config| async move {
+				service::new_full(config).map_err(sc_cli::Error::Service)
+			})
+		},
+	}
+}
+```
+
+之所以把match的其他arm都删掉，是因为根据调试结果，`./target/release/node-template --dev`直接就捅到最后一个分支去了，其他分支直接忽视即可。其中的`run_node_until_exit`值得关注，这意味着SNT进入了一个永不停止的事件循环（实际上也确实如此，因为只有按Ctrl+C才能让SNT停下来）。
+
+进入这个函数之后首先会打印一大堆信息，从最开始的`Substrate Node`到`Role: AUTHORITY`为止都是`Runner::print_node_infos`这个方法打印出来的。
+
+> 这里有个值得关注的点，即：很多方法在调试时不会立马返回，而是会愣一会再返回，这是因为这些耗时的任务都是使用tokio的Runtime的`block_on`方法执行的，虽然是协程执行但是却用阻塞的办法执行，因此需要等一会。
+
+接下来的事情就有趣了，程序运行到这里，就开始玩命生产 & 封装区块了：
+
+```rs
+let res = self
+    .tokio_runtime
+    .block_on(self.signals.run_until_signal(task_manager.future().fuse()));
+```
+
+这说明挖矿的逻辑就在这个`self.signals.run_until_signal(task_manager.future().fuse())`里。因此，这里出现的每一个函数都值得好好研究一番。

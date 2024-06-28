@@ -12,6 +12,5 @@ mod rpc;
 // sc_cli::Result包含的Error类型和thiserror有关
 fn main() -> sc_cli::Result<()> {
 	//! 入口函数就在这里。
-	println!("I guess the whole program starts from here!");
 	command::run()
 }
