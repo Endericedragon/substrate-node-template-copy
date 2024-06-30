@@ -5,6 +5,7 @@
 - [CLI Tools中对Substrate Node Template的描述](https://docs.substrate.io/reference/command-line-tools/node-template/)
 - [Explore the code](https://docs.substrate.io/quick-start/explore-the-code/)
 - [Substrate术语解释表](https://docs.substrate.io/reference/glossary)
+- [掘金 - Substrate专栏](https://juejin.cn/column/7227098017555005500)
 
 ## 阅读`cargo metadata`的输出
 
@@ -346,4 +347,88 @@ let res = self
 
 Substrate文档中特意提及，node目录中有几个文件需要重点关注，一个是`chain_spec.rs`，另一个是`service.rs`。本节将讨论前者，下一节讨论后者。
 
+**引用分析**
+
+首先从`runtime`中引用了一大堆表征账户、配置的struct。然后从`sc_service`中引入了表征链类型的枚举`ChainType`：
+
+```rs
+pub enum ChainType {
+    Development,
+    Local,
+    Live,
+    Custom( /* … */ )
+}
+```
+
+从上文中的叙述可知，以`sc_*`开头的依赖负责和外部其他节点通信。这是`chain_spec.rs`唯一一个用到`sc_*`的地方。其余的依赖项都是从`sp_*`引入的，即负责节点通信模块和内部runtime模块数据交换的依赖项。
+
+**私有辅助函数**
+
+只有一个私有的辅助函数：
+
+```rust
+fn testnet_genesis(
+	wasm_binary: &[u8], // 来源于WASM_BINARY.ok_or_else(...)
+	initial_authorities: Vec<(AuraId, GrandpaId)>, // 一个列表，其中包含PoA共识算法所需要的验证者（authority）的Id对，由同一个种子在AuraId和GrandpaId中计算获得的两个公钥构成。
+	root_key: AccountId, // 根用户，管理员，通常是通过调用get_account_id_from_seed从给定seed中算出来的
+	endowed_accounts: Vec<AccountId>, // 所有预定用户的列表
+	_enable_println: bool,
+) -> RuntimeGenesisConfig
+```
+
+其中，`WASM_BINARY`是从`runtime`中引入的常量，`AuraId, GrandpaId, AccountId, RuntimeGenesisConfig`均为从`runtime`中引入的结构体，他们的作用将会在后续的公开函数中解释。不过，联系上下文来看，可以给出这样的转换关系：
+
+```mermaid
+graph LR
+seed[seed: &str] -->|AuraId中定义的算法| auraPub[AuraId公钥]
+seed -->|GrandpaId中定义的算法| grandpaPub[GrandpaId公钥]
+auraPub -->|作为元组的第1项| 验证者Id
+grandpaPub -->|作为元组的第2项| 验证者Id
+seed -->|sr25519::Public中定义的算法| AccoundId
+```
+
+上述函数构造一个创世块的配置文件，其中预置账号为`endowed_accounts`所指定，验证者由`initial_authorities`指定，超级管理员由`root_key`指定。
+
+**公开函数**
+
+```rs
+pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public
+```
+
+上述函数可以接受一个字符串（字面量）作为种子，然后按照泛型参数`TPublic`中定义的求密钥对（一公一私）算法求得公钥。
+
+```rs
+pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
+where
+	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
+```
+
+上述函数经历了数次转换。首先，接受一个字符串（字面量）作为种子，然后按照泛型参数`TPublic`中定义的算法求得公钥。取得公钥后，转换为`AccountPublic`，再调用`into_account`方法，最终获得了`AccountId`。
+
+```rs
+pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
+	(get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
+}
+```
+
+上述函数结构过于简单，直接把源代码丢这儿，实际上就是用Aura和GRANDPA两种算法把同一个种子各自算一遍，然后塞进一个元组里形成一对唯一标识一位验证者的“键”。
+
+```rs
+pub fn development_config() -> Result<ChainSpec, String>
+pub fn local_testnet_config() -> Result<ChainSpec, String>
+```
+
+这俩太像了，放在一起讲也成。他们的任务都是类似的：
+
+1. 根据`WASM_BINARY`找到WASM二进制文件的位置。找不到就报错，退出。
+2. 以`ChainSpec`的形式，返回一个链配置。
+   1. 前者的链名为`Development`，id为`dev`；后者的链名为`Local Testnet`，id为`local_testnet`。
+   2. 前者的链类型为`ChainType::Development`，后者的是`ChainType::Local`。
+   3. 前者的验证者账号只有"Alice"，后者有"Alice"和"Bob"。
+   4. 前者的预置账号只有四个，后者有一大堆。
+
+其余选项均为空，故不再赘述。这俩函数会在`node/src/command.rs`的`impl SubstrateCli for Cli`中的`load_spec`方法中被调用。但是后者似乎没在任何地方被调用过？？？可能这个调用不是显式的，而且其调用位置可能压根不在SNT中而是在SNT的依赖中（毕竟是个trait）。
+
 ### service 模块
+
+

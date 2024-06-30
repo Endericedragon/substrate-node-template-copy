@@ -15,6 +15,8 @@ use std::{sync::Arc, time::Duration};
 // Our native executor instance.
 pub struct ExecutorDispatch;
 
+/// 根据术语表的说法，Dispatch == The execution of a function with a predefined set of arguments
+/// 这个东西的核心在于其中的`dispatch`方法，因为它可以使用函数名（字符串字面量形式）来调用函数
 impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
 	/// Only enable the benchmarking host functions when we actually want to benchmark.
 	#[cfg(feature = "runtime-benchmarks")]
@@ -39,7 +41,7 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
 #[allow(clippy::type_complexity)]
 pub fn new_partial(
-	config: &Configuration,
+	config: &Configuration, // 来自sc_service::config::Configuration
 ) -> Result<
 	sc_service::PartialComponents<
 		FullClient,
@@ -60,16 +62,18 @@ pub fn new_partial(
 	>,
 	ServiceError,
 > {
+	// telemetry来自sc_telemetry，需要对Telemetry有一些了解才能更好地解读下列代码
 	let telemetry = config
 		.telemetry_endpoints
-		.clone()
-		.filter(|x| !x.is_empty())
-		.map(|endpoints| -> Result<_, sc_telemetry::Error> { 
+		.clone() // 先搞一份遥测端点的拷贝
+		.filter(|x| !x.is_empty()) // 然后只留下非空的项
+		.map(|endpoints| -> Result<_, sc_telemetry::Error> {
+			// 啥是TelemetryWorker?
 			let worker = TelemetryWorker::new(16)?;
 			let telemetry = worker.handle().new_telemetry(endpoints);
 			Ok((worker, telemetry))
 		})
-		.transpose()?;
+		.transpose()?; // Result<Option<(TelemetryWorker, Telemetry)>, ...>?
 
 	let executor = sc_service::new_native_or_wasm_executor(config);
 	let (client, backend, keystore_container, task_manager) =
@@ -85,8 +89,9 @@ pub fn new_partial(
 		telemetry
 	});
 
+	// 看上去好像是想解决分叉
 	let select_chain = sc_consensus::LongestChain::new(backend.clone());
-
+	// 交易池诶
 	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
 		config.transaction_pool.clone(),
 		config.role.is_authority().into(),
@@ -95,6 +100,8 @@ pub fn new_partial(
 		client.clone(),
 	);
 
+	//? 下面会出场两个共识算法，分别来自不同的sc_*依赖项
+	// GRANDPA是用来做区块最终确认（finalization）的共识算法，发生在区块生产之后
 	let (grandpa_block_import, grandpa_link) = sc_consensus_grandpa::block_import(
 		client.clone(),
 		&client,
@@ -102,6 +109,7 @@ pub fn new_partial(
 		telemetry.as_ref().map(|x| x.handle()),
 	)?;
 
+	// Aura是用来做区块生产的共识算法
 	let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 
 	let import_queue =
