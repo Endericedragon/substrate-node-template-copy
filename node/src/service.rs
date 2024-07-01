@@ -110,6 +110,7 @@ pub fn new_partial(
 	)?;
 
 	// Aura是用来做区块生产的共识算法
+	// 这个应该是单个时间片的时间长度
 	let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 
 	let import_queue =

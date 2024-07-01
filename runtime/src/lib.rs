@@ -72,28 +72,33 @@ pub type Hash = sp_core::H256;
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
 /// to even the core data structures.
+/// 似乎是一层抽象，只要别人都用这层抽象，他们就不需要关心这层抽象底下都是些啥玩意了。
+/// 具体来说它抽象了：交易、区块头、区块、区块编号和会话密钥这几样东西
 pub mod opaque {
 	use super::*;
-
+	/// 格式不是那么严谨的交易
 	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 
 	/// Opaque block header type.
+	/// 分别指定了区块编号和哈希类型
 	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 	/// Opaque block type.
+	/// 利用刚才定义的交易类型和区块头类型作为泛型参数，构造的区块类型
 	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 	/// Opaque block identifier type.
 	pub type BlockId = generic::BlockId<Block>;
 
 	impl_opaque_keys! {
 		pub struct SessionKeys {
-			pub aura: Aura,
-			pub grandpa: Grandpa,
+			pub aura: Aura, // pub type Aura = pallet_aura::Pallet<Runtime>
+			pub grandpa: Grandpa, // pub type Grandpa = pallet_grandpa::Pallet<Runtime>
 		}
 	}
 }
 
 // To learn more about runtime versioning, see:
 // https://docs.substrate.io/main-docs/build/upgrade#runtime-versioning
+/// 似乎，为Substrate的可升级型考虑，semver那种x.y.z的版本号不够用了，必须采用更精确的版本号
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("node-template"),
@@ -124,7 +129,7 @@ pub const MILLISECS_PER_BLOCK: u64 = 6000;
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 // Time is measured by number of blocks.
-pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
+pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber); // 产出10块 == 1分钟
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
@@ -134,6 +139,7 @@ pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
+// 应该是相当于0.75
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 parameter_types! {
@@ -151,6 +157,8 @@ parameter_types! {
 }
 
 // Configure FRAME pallets to include in runtime.
+// 这是在runtime中挂载pallet的常见写法，目前只知道这是往runtime里加pallet就行了
+// todo: 去调查一下如何加载pallet再回来看这一节
 
 impl frame_system::Config for Runtime {
 	/// The basic call filter to use in dispatchable.
@@ -273,6 +281,8 @@ impl pallet_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
 }
+
+// pallet配置结束之后就开始构建runtime了
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(

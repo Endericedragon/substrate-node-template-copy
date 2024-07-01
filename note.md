@@ -369,7 +369,7 @@ pub enum ChainType {
 ```rust
 fn testnet_genesis(
 	wasm_binary: &[u8], // 来源于WASM_BINARY.ok_or_else(...)
-	initial_authorities: Vec<(AuraId, GrandpaId)>, // 一个列表，其中包含PoA共识算法所需要的验证者（authority）的Id对，由同一个种子在AuraId和GrandpaId中计算获得的两个公钥构成。
+	initial_authorities: Vec<(AuraId, GrandpaId)>, // 一个列表，其中包含PoA共识算法所需要的区块生产者（authority）的Id对，由同一个种子在AuraId和GrandpaId中计算获得的两个公钥构成。
 	root_key: AccountId, // 根用户，管理员，通常是通过调用get_account_id_from_seed从给定seed中算出来的
 	endowed_accounts: Vec<AccountId>, // 所有预定用户的列表
 	_enable_println: bool,
@@ -387,7 +387,9 @@ grandpaPub -->|作为元组的第2项| 验证者Id
 seed -->|sr25519::Public中定义的算法| AccoundId
 ```
 
-上述函数构造一个创世块的配置文件，其中预置账号为`endowed_accounts`所指定，验证者由`initial_authorities`指定，超级管理员由`root_key`指定。
+上述函数构造一个创世块的配置文件，其中预置账号为`endowed_accounts`所指定，区块生产者由`initial_authorities`指定，超级管理员由`root_key`指定。
+
+> 注：在Substrate语境下，共识操作分为两步，一步叫Block Authoring（节点用来生产区块的方法），一步叫Block Finalization（在链出现分支时确定选择哪个分支的方法）。因此可以推断，上文代码中的`initial_authorities`实际上指的就是生产区块的账户。
 
 **公开函数**
 
@@ -411,7 +413,7 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 }
 ```
 
-上述函数结构过于简单，直接把源代码丢这儿，实际上就是用Aura和GRANDPA两种算法把同一个种子各自算一遍，然后塞进一个元组里形成一对唯一标识一位验证者的“键”。
+上述函数结构过于简单，直接把源代码丢这儿，实际上就是用Aura和GRANDPA两种算法把同一个种子各自算一遍，然后塞进一个元组里形成一对唯一标识一位区块生产者的“键”。
 
 ```rs
 pub fn development_config() -> Result<ChainSpec, String>
@@ -424,11 +426,33 @@ pub fn local_testnet_config() -> Result<ChainSpec, String>
 2. 以`ChainSpec`的形式，返回一个链配置。
    1. 前者的链名为`Development`，id为`dev`；后者的链名为`Local Testnet`，id为`local_testnet`。
    2. 前者的链类型为`ChainType::Development`，后者的是`ChainType::Local`。
-   3. 前者的验证者账号只有"Alice"，后者有"Alice"和"Bob"。
+   3. 前者的区块生产者只有"Alice"，后者有"Alice"和"Bob"。
    4. 前者的预置账号只有四个，后者有一大堆。
 
 其余选项均为空，故不再赘述。这俩函数会在`node/src/command.rs`的`impl SubstrateCli for Cli`中的`load_spec`方法中被调用。但是后者似乎没在任何地方被调用过？？？可能这个调用不是显式的，而且其调用位置可能压根不在SNT中而是在SNT的依赖中（毕竟是个trait）。
 
 ### service 模块
 
+这模块使用了两种共识算法。为了更好地分析代码，有必要了解一下这两种共识算法。
 
+> **Aura共识算法：生产区块**
+>
+> [Aura共识算法](https://openethereum.github.io/Aura)十分容易理解。它是用来确定由谁来生产区块的。这东西的工作流程大致如下：
+>
+> 1. 将连续的时间划分为离散的一个一个时间片。每个时间片中，只有一部分的区块生产者能产生新的区块。
+> 2. 在一个时间片中选择生产者的办法是轮换：$选中的生产者的编号 = \frac{当前时间戳}{时间片大小}\ \%\ 生产者数量$。
+> 3. 另有一种叫BABE的共识算法，它和Aura一样也负责区块生成，但它选择生产者的办法是使用随机数随机选择。
+
+> **Grandpa共识算法：消除分叉**
+>
+> GRANDPA共识算法似乎有些复杂，以至于需要一整篇论文来论述它。好在[波卡链wiki](https://wiki.polkadot.network/docs/learn-consensus#finality-gadget-grandpa)简要介绍了一下这个东西，大概是这么个运作方法：
+>
+> 1. 首先指定一组节点用来做“选民”（voter），他们会给一段链（而不是单个的节点，这样干有利于提高效率）投票。
+> 2. 一旦某条分叉获得了$\frac{2}{3}$的票数，就把它认为是“正统的”，然后把其他分叉都丢掉。
+> 3. 似乎不止一轮投票，起码得经过两轮（预投票pre-vote和预提交pre-commit）。
+>
+> 在Substrate中它以[frame pallet的形式](https://github.com/paritytech/polkadot-sdk/tree/master/substrate/frame/grandpa)出现。
+
+有了以上的知识储备，让我们dive into service.rs吧。
+
+`service.rs`中直接被外界调用的就是它的`new_full`函数，该函数在正常状态下返回一个`Result<TaskManager, ...>`，因此首先需要知道这个`TaskManager`何方神圣。通过F12大法知道。。。还是看不懂。

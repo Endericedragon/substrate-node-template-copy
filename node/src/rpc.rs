@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use jsonrpsee::RpcModule;
+use jsonrpsee::RpcModule; // features = ["server"]
 use node_template_runtime::{opaque::Block, AccountId, Balance, Nonce};
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
@@ -44,7 +44,7 @@ where
 
 	let mut module = RpcModule::new(());
 	let FullDeps { client, pool, deny_unsafe } = deps;
-
+	// RpcModule::merge = 把其他RpcModule的回调函数拿过来给自己加上
 	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
 	module.merge(TransactionPayment::new(client).into_rpc())?;
 
