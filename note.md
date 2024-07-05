@@ -456,3 +456,9 @@ pub fn local_testnet_config() -> Result<ChainSpec, String>
 有了以上的知识储备，让我们dive into service.rs吧。
 
 `service.rs`中直接被外界调用的就是它的`new_full`函数，该函数在正常状态下返回一个`Result<TaskManager, ...>`，因此首先需要知道这个`TaskManager`何方神圣。通过F12大法知道。。。还是看不懂。
+
+## 确认各模块对具体操作系统的耦合程度
+
+首先强调一下，依赖Crate和模块Module大差不差，大家要做的处理都差不多，都是要对具体操作系统解耦。
+
+根据我们的分析结果，SNT的三个大组件的依赖关系是：`pallets --> runtime --> node`。由于`pallets`可以不管，因此我们从`runtime`开始研究，看看它（以及它的各项依赖）和具体操作系统的耦合度如何。
